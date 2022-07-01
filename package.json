@@ -1,0 +1,19 @@
+{
+  "name": "gif-loop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "nodemon brain/train.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow/tfjs-node": "^3.18.0",
+    "gifuct-js": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0"
+  }
+}
