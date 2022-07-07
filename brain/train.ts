@@ -32,16 +32,35 @@ const gifs = [
     "64383000",
     "64383031",
     "64383113",
-    "64383236"
+    "64383236",
+    "64383258",
+    "64383263",
+    "64383326",
+    "64383421",
+    "64383608",
+    "64383638",
+    "64383651"
 ]
-const trainingData: number[][][][] = new Array(gifs.length);
-for (let i = 0; i < gifs.length; i++) {
-    const gif = parseGIF(readFileSync(`./brain/training-data/${gifs[i]}.gif`));
-    const frames = decompressFrames(gif, true);
-    trainingData[i] = prepareFrames(frames[1].delay, gif.lsd.width, gif.lsd.height, frames);
-}
 
-console.log(trainingData.length);
+const trainingData: [number, number[][]][][] = new Array(gifs.length);
+
+const gif = parseGIF(readFileSync(`./brain/training-data/64383113.gif`));
+const frames = decompressFrames(gif, true);
+trainingData[0] = prepareFrames(frames[1].delay, gif.lsd.width, gif.lsd.height, frames);
+
+// for (let i = 0; i < gifs.length; i++) {
+//     const gif = parseGIF(readFileSync(`./brain/training-data/${gifs[i]}.gif`));
+//     const frames = decompressFrames(gif, true);
+//     try {
+//         trainingData[i] = prepareFrames(frames[1].delay, gif.lsd.width, gif.lsd.height, frames);
+//     } catch (error) {
+//         console.log()
+//         console.error(error);
+//         console.log(i)
+//         console.log();
+//     }
+    
+// }
 
 // console.log(tf.tensor(getAllPixelData(frames[1].delay, gif.lsd.width, gif.lsd.height, frames)).shape)
 // getAllPixelData(frames[1].delay, gif.lsd.width, gif.lsd.height, frames);

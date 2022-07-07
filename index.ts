@@ -1,4 +1,3 @@
-import { readdirSync, readFileSync } from "fs";
 import { decompressFrames, ParsedFrame, parseGIF } from "gifuct-js";
 
 export default function isLoopedGIF(data: Buffer) {
@@ -30,29 +29,59 @@ export default function isLoopedGIF(data: Buffer) {
 
 // Fast ParsedFrame.patch array to 420x420 Grayscale pixeldata array (~100ms/30frames of 480x600px gif)
 export function prepareFrames(delay: number, width: number, height: number, frames: ParsedFrame[]) {
-	const grayArray: number[][][] = new Array(frames.length);
-	const pixelWidth: number = width * 4;
+	const grayArray: [number, number[][]][] = new Array(frames.length);
 	for (let i = 0; i < frames.length; i++) {
 		const patch = frames[i].patch;
 		const imgData: number[][] = new Array(height);
-		for (let y = 0; y < patch.length; y+=pixelWidth) {
+		const frameWidth = frames[i].dims.width;
+		const frameHeight = frames[i].dims.height;
+		const left = frames[i].dims.left;
+		const right = width - frameWidth - left;
+		const top = frames[i].dims.top;
+		const bottom = height - frameHeight - top;
+		const totalFrameWidth = frameWidth * 4;
+		if (top) {
+			for (let y = 0; y < top; y++) {
+				imgData[y] = grayArray[i - 1][1][y];
+			}
+		}
+		for (let y = 0; y < patch.length; y+=totalFrameWidth) {
 			const row: number[] = new Array(width);
-			const currentYIndex = y / pixelWidth;
-			for (let x = y, endX = x + pixelWidth; x < endX; x+=4) {
-				const currentXIndex = (x - y) >>> 2;
-				const avg = (patch[x] + patch[x + 1] + patch[x + 2]) / 3;
-				row[currentXIndex] = (avg) ? Math.floor(avg) : (i) ? grayArray[i - 1][currentYIndex][currentXIndex] : 0;
+			const currentYIndex = top + (y / totalFrameWidth);
+			if (left) {
+				for (let x = 0; x < left; x++) {
+					row[x] = grayArray[i - 1][1][currentYIndex][x];
+				}
+			}
+			for (let x = y, endX = x + totalFrameWidth; x < endX; x+=4) {
+				const currentXIndex = left + ((x - y) >>> 2);
+				if (patch[x + 3] == 0) {
+					row[currentXIndex] = grayArray[i - 1][1][currentYIndex][currentXIndex];
+				} else {
+					row[currentXIndex] = Math.floor((patch[x] + patch[x + 1] + patch[x + 2]) / 3);
+				}
+			}
+			if (right) {
+				for (let x = width - right; x < width; x++) {
+					row[x] = grayArray[i - 1][1][currentYIndex][x];
+				}
 			}
 			imgData[currentYIndex] = row;
 		}
-		grayArray[i] = imgData;
+		if (bottom) {
+			for (let y = height - bottom; y < height; y++) {
+				imgData[y] = grayArray[i - 1][1][y];
+			}
+		}
+		grayArray[i] = [delay, imgData];
 	}
 	for (let i = 0; i < grayArray.length; i++) {
-		grayArray[i] = scale420(grayArray[i], width, height);
+		grayArray[i][1] = scale420(grayArray[i][1], width, height);
 	}
 	return grayArray;
 }
 
+// Nearest Neighbour Scaling 
 // Port of http://tech-algorithm.com/articles/nearest-neighbor-image-scaling/
 function scale420(data: number[][], currentWidth: number, currentHeight: number) {
 	const output: number[][] = new Array(420);
