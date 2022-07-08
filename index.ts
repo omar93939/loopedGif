@@ -28,8 +28,8 @@ export default function isLoopedGIF(data: Buffer) {
 // }
 
 // Fast ParsedFrame.patch array to 420x420 Grayscale pixeldata array (~100ms/30frames of 480x600px gif)
-export function prepareFrames(delay: number, width: number, height: number, frames: ParsedFrame[]) {
-	const grayArray: [number, number[][]][] = new Array(frames.length);
+export function prepareFrames(width: number, height: number, frames: ParsedFrame[]) {
+	const grayArray: number[][][] = new Array(frames.length);
 	for (let i = 0; i < frames.length; i++) {
 		const patch = frames[i].patch;
 		const imgData: number[][] = new Array(height);
@@ -42,7 +42,7 @@ export function prepareFrames(delay: number, width: number, height: number, fram
 		const totalFrameWidth = frameWidth * 4;
 		if (top) {
 			for (let y = 0; y < top; y++) {
-				imgData[y] = grayArray[i - 1][1][y];
+				imgData[y] = grayArray[i - 1][y];
 			}
 		}
 		for (let y = 0; y < patch.length; y+=totalFrameWidth) {
@@ -50,33 +50,33 @@ export function prepareFrames(delay: number, width: number, height: number, fram
 			const currentYIndex = top + (y / totalFrameWidth);
 			if (left) {
 				for (let x = 0; x < left; x++) {
-					row[x] = grayArray[i - 1][1][currentYIndex][x];
+					row[x] = grayArray[i - 1][currentYIndex][x];
 				}
 			}
 			for (let x = y, endX = x + totalFrameWidth; x < endX; x+=4) {
 				const currentXIndex = left + ((x - y) >>> 2);
 				if (patch[x + 3] == 0) {
-					row[currentXIndex] = grayArray[i - 1][1][currentYIndex][currentXIndex];
+					row[currentXIndex] = grayArray[i - 1][currentYIndex][currentXIndex];
 				} else {
 					row[currentXIndex] = Math.floor((patch[x] + patch[x + 1] + patch[x + 2]) / 3);
 				}
 			}
 			if (right) {
 				for (let x = width - right; x < width; x++) {
-					row[x] = grayArray[i - 1][1][currentYIndex][x];
+					row[x] = grayArray[i - 1][currentYIndex][x];
 				}
 			}
 			imgData[currentYIndex] = row;
 		}
 		if (bottom) {
 			for (let y = height - bottom; y < height; y++) {
-				imgData[y] = grayArray[i - 1][1][y];
+				imgData[y] = grayArray[i - 1][y];
 			}
 		}
-		grayArray[i] = [delay, imgData];
+		grayArray[i] = imgData;
 	}
 	for (let i = 0; i < grayArray.length; i++) {
-		grayArray[i][1] = scale420(grayArray[i][1], width, height);
+		grayArray[i] = scale420(grayArray[i], width, height);
 	}
 	return grayArray;
 }
